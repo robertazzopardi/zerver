@@ -62,6 +62,7 @@ const RequestLine = struct {
 pub const Request = struct {
     request_line: RequestLine,
     headers: ArrayList(header.Header),
+    body: []const u8,
 
     pub fn parse(request_buffer: []u8) RequestError!Request {
         var lines = std.mem.split(u8, request_buffer, constants.CRLF);
@@ -69,18 +70,25 @@ pub const Request = struct {
         const request_line = try RequestLine.parse(request_line_string);
 
         var headers = ArrayList(header.Header).init(std.heap.page_allocator);
-        while (lines.next()) |chunk| {
-            const parsed_header = header.Header.parse(chunk);
+        while (lines.next()) |line| {
+            const parsed_header = header.Header.parse(line);
 
             if (parsed_header) |val| {
                 headers.append(val) catch continue;
-                std.debug.print("{}\n", .{val});
+            }
+
+            if (line.len == 0) {
+                // No content here indicates the end of headers
+                break;
             }
         }
+
+        const body = lines.rest();
 
         return .{
             .request_line = request_line,
             .headers = headers,
+            .body = body,
         };
     }
 };
