@@ -38,7 +38,8 @@ pub const Server = struct {
 
             _ = try request.Request.parse(buffer[0..rec_size]);
 
-            const res = response.Response.new(response.Status.OK, "Hello World");
+            var res = response.Response.new(response.Status.OK, "Hello World");
+            try res.set_header("Content-Type", "test/plain");
             // std.debug.print("res {s}\n", .{res.build()});
             _ = try posix.send(connection, res.build(), 0);
             // std.debug.print("Sent {d} bytes\n\n", .{sent_bytes});

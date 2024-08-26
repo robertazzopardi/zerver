@@ -82,9 +82,11 @@ const StatusLine = struct {
     }
 
     fn build(self: StatusLine) []const u8 {
-        const buf = std.fmt.allocPrint(std.heap.page_allocator, "{s} {d} {s}", .{
+        const buf = std.fmt.allocPrint(std.heap.page_allocator, "{s}{s}{d}{s}{s}", .{
             self.version,
+            constants.SP,
             @intFromEnum(self.status),
+            constants.SP,
             self.status.reason(),
         }) catch "format failed";
 
@@ -106,16 +108,36 @@ pub const Response = struct {
         };
     }
 
+    pub fn set_header(self: *Response, name: []const u8, value: []const u8) !void {
+        const new_header = header.Header.new(name, value);
+        try self.headers.append(new_header);
+    }
+
+    fn concat_headers(self: Response) []const u8 {
+        var result = ArrayList([]const u8).init(std.heap.page_allocator);
+        errdefer result.deinit();
+        for (self.headers.items) |item| {
+            if (item.string()) |val| {
+                result.append(val) catch continue;
+            }
+        }
+        return std.mem.concat(std.heap.page_allocator, u8, result.items) catch "";
+    }
+
     pub fn build(self: Response) []const u8 {
+        const headers = self.concat_headers();
+
         const buf = std.fmt.allocPrint(std.heap.page_allocator, "{s}{s}{s}{s}{s}{s}{s}", .{
             self.status_line.build(),
             constants.CRLF,
-            "Content-Type: text/plain",
+            headers,
             constants.CRLF,
             constants.CRLF,
             self.body,
             constants.CRLF,
         }) catch "format failed";
+
+        self.headers.deinit();
 
         return buf;
     }

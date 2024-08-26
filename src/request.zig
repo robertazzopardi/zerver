@@ -72,7 +72,7 @@ pub const Request = struct {
         var headers = ArrayList(header.Header).init(std.heap.page_allocator);
 
         while (lines.next()) |line| {
-            const parsed_header = header.Header.parse(line);
+            const parsed_header = header.Header.parse(line) catch null;
             if (parsed_header) |val| {
                 headers.append(val) catch continue;
             }
