@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const request = @import("request.zig");
+const response = @import("response.zig");
 
 const posix = std.posix;
 const net = std.net;
@@ -37,9 +38,10 @@ pub const Server = struct {
 
             _ = try request.Request.parse(buffer[0..rec_size]);
 
-            const server_response = "HTTP/1.0 200 OK\n\nHello World";
-            const sent_bytes = try posix.send(connection, server_response, 0);
-            std.debug.print("Sent {d} bytes\n\n", .{sent_bytes});
+            const res = response.Response.new(response.Status.OK, "Hello World");
+            // std.debug.print("res {s}\n", .{res.build()});
+            _ = try posix.send(connection, res.build(), 0);
+            // std.debug.print("Sent {d} bytes\n\n", .{sent_bytes});
         }
 
         posix.close(self.socket);

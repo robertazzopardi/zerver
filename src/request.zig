@@ -70,9 +70,9 @@ pub const Request = struct {
         const request_line = try RequestLine.parse(request_line_string);
 
         var headers = ArrayList(header.Header).init(std.heap.page_allocator);
+
         while (lines.next()) |line| {
             const parsed_header = header.Header.parse(line);
-
             if (parsed_header) |val| {
                 headers.append(val) catch continue;
             }
