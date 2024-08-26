@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const testing = std.testing;
+const fmt = std.fmt;
 
 pub const Header = struct {
     // Request-Header = Accept
@@ -42,11 +43,11 @@ pub const Header = struct {
         return Header.new(parsed_name, parsed_value);
     }
 
-    pub fn string(self: Header) ?[]const u8 {
+    pub fn string(self: Header) ?[]u8 {
         if (self.name.len == 0 or self.value.len == 0) {
             return null;
         }
-        return std.fmt.allocPrint(std.heap.page_allocator, "{s}: {s}", .{
+        return fmt.allocPrint(std.heap.page_allocator, "{s}: {s}", .{
             self.name, self.value,
         }) catch null;
     }

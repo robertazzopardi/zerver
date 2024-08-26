@@ -82,7 +82,7 @@ const StatusLine = struct {
     }
 
     fn build(self: StatusLine) []const u8 {
-        const buf = std.fmt.allocPrint(std.heap.page_allocator, "{s}{s}{d}{s}{s}", .{
+        const buf = fmt.allocPrint(std.heap.page_allocator, "{s}{s}{d}{s}{s}", .{
             self.version,
             constants.SP,
             @intFromEnum(self.status),
@@ -127,7 +127,7 @@ pub const Response = struct {
     pub fn build(self: Response) []const u8 {
         const headers = self.concat_headers();
 
-        const buf = std.fmt.allocPrint(std.heap.page_allocator, "{s}{s}{s}{s}{s}{s}{s}", .{
+        const buf = fmt.allocPrint(std.heap.page_allocator, "{s}{s}{s}{s}{s}{s}{s}", .{
             self.status_line.build(),
             constants.CRLF,
             headers,

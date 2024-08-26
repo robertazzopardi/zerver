@@ -2,9 +2,11 @@ const std = @import("std");
 
 const request = @import("request.zig");
 const response = @import("response.zig");
+const logging = @import("logging.zig");
 
 const posix = std.posix;
 const net = std.net;
+const testing = std.testing;
 
 pub const Server = struct {
     address: net.Address,
@@ -25,26 +27,41 @@ pub const Server = struct {
     }
 
     pub fn serve(self: *Server) !void {
+        // std.log.info("Server listening on {s}:{d}\n", .{ self.address.in.sa, self.address.getPort() });
+
         var socklen = self.address.getOsSockLen();
 
-        var buffer: [1024]u8 = undefined;
+        var req_buffer: [1024]u8 = undefined;
 
         while (true) {
             const connection = try posix.accept(self.socket, &self.address.any, &socklen, 0);
             defer posix.close(connection);
 
-            const rec_size = try posix.recv(connection, &buffer, 0);
-            std.debug.print("{s}\n", .{buffer[0..rec_size]});
+            const rec_size = try posix.recv(connection, &req_buffer, 0);
 
-            _ = try request.Request.parse(buffer[0..rec_size]);
+            const req = try request.Request.parse(req_buffer[0..rec_size]);
 
             var res = response.Response.new(response.Status.OK, "Hello World");
             try res.set_header("Content-Type", "test/plain");
-            // std.debug.print("res {s}\n", .{res.build()});
             _ = try posix.send(connection, res.build(), 0);
-            // std.debug.print("Sent {d} bytes\n\n", .{sent_bytes});
+
+            Server.log_request(req, res);
         }
 
+        self.close();
+    }
+
+    fn log_request(req: request.Request, res: response.Response) void {
+        const host = req.get_header("Host") orelse "-";
+        const request_line = req.request_line.string() orelse "-";
+        const response_status = @intFromEnum(res.status_line.status);
+        const bytes_returned = res.body.len;
+        std.log.info("{s}\n", .{logging.common_log(host, request_line, response_status, bytes_returned)});
+    }
+
+    pub fn handle() void {}
+
+    pub fn close(self: Server) void {
         posix.close(self.socket);
     }
 };
