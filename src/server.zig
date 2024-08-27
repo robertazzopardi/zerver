@@ -42,7 +42,7 @@ pub const Server = struct {
             const req = try request.Request.parse(req_buffer[0..rec_size]);
 
             var res = response.Response.new(response.Status.OK, "Hello World");
-            try res.set_header("Content-Type", "test/plain");
+            try res.set_header("Content-Type", "text/plain");
             _ = try posix.send(connection, res.build(), 0);
 
             Server.log_request(req, res);
